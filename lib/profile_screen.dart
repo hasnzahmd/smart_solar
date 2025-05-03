@@ -112,30 +112,35 @@ class _ProfileNameScreenState extends State<ProfileNameScreen> {
                         controller: _firstNameController,
                         hintText: 'First Name',
                         icon: Icons.person_outline,
+                        textCapitalization: TextCapitalization.sentences,
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _lastNameController,
                         hintText: 'Last Name',
                         icon: Icons.person_outline,
+                        textCapitalization: TextCapitalization.sentences,
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _addressController,
                         hintText: 'Address',
                         icon: Icons.home_outlined,
+                        textCapitalization: TextCapitalization.sentences,
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _cityController,
                         hintText: 'City',
                         icon: Icons.location_city_outlined,
+                        textCapitalization: TextCapitalization.sentences,
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _phoneController,
                         hintText: 'Phone',
                         icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 16),
                       _buildUserTypeSelection(),
@@ -160,6 +165,8 @@ class _ProfileNameScreenState extends State<ProfileNameScreen> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       height: 56,
@@ -169,6 +176,8 @@ class _ProfileNameScreenState extends State<ProfileNameScreen> {
       ),
       child: TextField(
         controller: controller,
+        textCapitalization: textCapitalization,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
