@@ -2,9 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smart_solar/phone_verify.dart';
-import 'package:smart_solar/home_screen.dart';
-import 'package:smart_solar/verify_phone.dart';
+import 'package:smart_solar/pages/home_screen.dart';
+import 'package:smart_solar/auth/verify_phone.dart';
 
 class LoginScreen extends StatefulWidget {
   @override

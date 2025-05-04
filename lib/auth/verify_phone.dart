@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:country_code_picker/country_code_picker.dart';
-import 'package:smart_solar/phone_verify.dart';
-import 'package:smart_solar/verify_phone.dart';
+import 'package:smart_solar/auth/phone_verify.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   @override

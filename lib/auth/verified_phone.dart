@@ -1,13 +1,12 @@
 // email_verified_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:smart_solar/password.dart';
-import 'package:smart_solar/verify_phone.dart';
+import 'package:smart_solar/onboard/create_password.dart';
 
-class EmailVerifiedScreen extends StatelessWidget {
+class PhoneVerifiedScreen extends StatelessWidget {
   final VoidCallback onNext;
 
-  const EmailVerifiedScreen({
+  const PhoneVerifiedScreen({
     Key? key,
     required this.onNext,
   }) : super(key: key);
@@ -45,7 +44,7 @@ class EmailVerifiedScreen extends StatelessWidget {
 
               // Title
               Text(
-                'Email Verified',
+                'Phone Number Verified',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -56,7 +55,7 @@ class EmailVerifiedScreen extends StatelessWidget {
 
               // Subtitle
               Text(
-                'Your email has been verified successfully.',
+                'Your phone has been verified successfully.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey[600],
@@ -81,7 +80,7 @@ class EmailVerifiedScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (context) => CreatePasswordScreen(), // Replace 'NextScreen' with your target screen
 
-                    ),);},
+                      ),);},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF00A99D),
                     shape: RoundedRectangleBorder(

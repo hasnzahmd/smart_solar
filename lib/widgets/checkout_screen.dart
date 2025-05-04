@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
-import 'package:smart_solar/snackbar_utils.dart';
+import 'package:smart_solar/widgets/snackbar_utils.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -575,7 +574,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           ),
                           Text(
-                            '${(item['price'] * item['quantity']).toStringAsFixed(0)} RS',
+                            '${(item['price'] * item['quantity']).toStringAsFixed(0)} Rs',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

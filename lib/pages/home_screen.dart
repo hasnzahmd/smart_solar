@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_solar/product_detail_screen.dart';
-import 'package:smart_solar/bottom_nav_bar.dart';
-import 'package:smart_solar/booking_screen.dart';
-import 'package:smart_solar/snackbar_utils.dart';
+import 'package:smart_solar/widgets/product_details.dart';
+import 'package:smart_solar/widgets/bottom_nav_bar.dart';
+import 'package:smart_solar/pages/service_screen.dart';
+import 'package:smart_solar/widgets/snackbar_utils.dart';
 // Import the utils
 
 class HomeScreen extends StatefulWidget {
@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   String _selectedCategory = 'All';
-  final List<String> _categories = ['All', 'Solar', 'Batteries', 'Inverter'];
+  final List<String> _categories = ['All', 'Solar', 'Battery', 'Inverter'];
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -59,15 +59,34 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _userName = '${userData['firstName']} ${userData['lastName']}';
             _userLocation = userData['city'] ?? 'Pakistan';
+            _isLoading = false;
           });
+        } else {
+          // User doc does not exist, logout
+          await _auth.signOut();
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/login');
+          }
+        }
+      } else {
+        // No user, logout
+        await _auth.signOut();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
         }
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      // Error loading user data, logout
+      await _auth.signOut();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -421,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookingScreen(serviceType: title),
+            builder: (context) => ServiceScreen(serviceType: title),
           ),
         );
       },
@@ -487,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.only(right: 10),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF00A99D) : Colors.grey.shade200,
+                color: isSelected ? const Color(0xFF00A99D) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Center(
@@ -560,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductItem(String docId, String title, String price, String image) {
+  Widget _buildProductItem(String docId, String title, int price, String image) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -577,7 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: const Color(0x7802A290),
@@ -622,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Text(
-                          price,
+                          'Rs $price',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black54,

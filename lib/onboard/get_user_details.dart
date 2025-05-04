@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_solar/home_screen.dart'; // Import HomeScreen
+import 'package:smart_solar/pages/home_screen.dart'; // Import HomeScreen
 
-class ProfileNameScreen extends StatefulWidget {
-  const ProfileNameScreen({Key? key}) : super(key: key);
+class GetUserDetails extends StatefulWidget {
+  const GetUserDetails({Key? key}) : super(key: key);
 
   @override
-  State<ProfileNameScreen> createState() => _ProfileNameScreenState();
+  State<GetUserDetails> createState() => _GetUserDetailsState();
 }
 
-class _ProfileNameScreenState extends State<ProfileNameScreen> {
+class _GetUserDetailsState extends State<GetUserDetails> {
   String userType = 'Customer';
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();

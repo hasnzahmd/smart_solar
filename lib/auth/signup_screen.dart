@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:smart_solar/phone_verify.dart';
-import 'package:smart_solar/verify_phone.dart';
+import 'package:smart_solar/auth/verify_phone.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override

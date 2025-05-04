@@ -20,7 +20,7 @@ SnackBar buildCustomSnackBar(
       borderRadius: BorderRadius.circular(12),
     ),
     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    duration: const Duration(milliseconds: 500), // 500ms duration
+    duration: const Duration(milliseconds: 2000), // 500ms duration
     elevation: 6,
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     action: actionLabel != null && actionOnPressed != null

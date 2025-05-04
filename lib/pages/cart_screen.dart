@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_solar/checkout_screen.dart';
+import 'package:smart_solar/widgets/checkout_screen.dart';
 
-import 'package:smart_solar/snackbar_utils.dart';
+import 'package:smart_solar/widgets/snackbar_utils.dart';
 
 
-import 'bottom_nav_bar.dart'; // Import the utils
+import '../widgets/bottom_nav_bar.dart'; // Import the utils
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -24,7 +24,6 @@ class _CartScreenState extends State<CartScreen> {
   int _selectedIndex = 3; // Cart tab selected
   final TextEditingController _couponController = TextEditingController();
   double _discount = 0.0; // To store the applied discount
-  String? _couponError;
 
   @override
   void initState() {
@@ -143,33 +142,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  void _applyCoupon() {
-    final couponCode = _couponController.text.trim().toUpperCase();
-    setState(() {
-      _couponError = null;
-    });
-
-    // Example coupon logic (replace with actual backend validation if needed)
-    if (couponCode == 'SAVE10') {
-      setState(() {
-        _discount = _totalAmount * 0.10; // 10% discount
-      });
-    } else if (couponCode == 'SAVE20') {
-      setState(() {
-        _discount = _totalAmount * 0.20; // 20% discount
-      });
-    } else {
-      setState(() {
-        _couponError = 'Invalid coupon code';
-      });
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      buildCustomSnackBar('Coupon applied! You saved ${_discount.toStringAsFixed(0)} RS'),
-    );
-  }
-
   void _proceedToCheckout() {
     if (_cartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -220,7 +192,7 @@ class _CartScreenState extends State<CartScreen> {
             } else if (index == 1) { // Booking
               Navigator.pushReplacementNamed(context, '/booking-history');
             } else if (index == 2) { // Floating button (Booking)
-              Navigator.pushNamed(context, '/booking');
+              Navigator.pushNamed(context, '/service');
             } else if (index == 4) { // Profile
               Navigator.pushReplacementNamed(context, '/profile');
             }
@@ -331,7 +303,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                     Text(
-                      '${(_totalAmount - _discount).toStringAsFixed(0)} RS',
+                      '${(_totalAmount - _discount).toStringAsFixed(0)} Rs',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -413,7 +385,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(item['price'] * item['quantity']).toStringAsFixed(0)} RS',
+                  '${(item['price'] * item['quantity']).toStringAsFixed(0)} Rs',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

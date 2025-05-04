@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:smart_solar/bottom_nav_bar.dart';
-import 'package:smart_solar/booking_screen.dart';
-import 'package:smart_solar/snackbar_utils.dart';
+import 'package:smart_solar/widgets/bottom_nav_bar.dart';
+import 'package:smart_solar/widgets/snackbar_utils.dart';
  // Import the utils
 
 class BookingHistoryScreen extends StatefulWidget {
@@ -18,7 +17,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
   late TabController _tabController;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  bool _isLoading = true;
   int _selectedIndex = 1; // Set to 1 for Booking tab
 
   @override
@@ -226,6 +224,68 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
         ? (items.isNotEmpty ? items[0].toString() : 'Item')
         : (items.isNotEmpty ? items[0]['title']?.toString() ?? 'Item' : 'Item');
 
+    // --- Fetch category for main item in order card ---
+    String? mainCategory;
+    if (type == 'order' && items.isNotEmpty && items[0]['productId'] != null) {
+      // This is async, so we need to use a FutureBuilder to show category when loaded
+      return FutureBuilder<DocumentSnapshot>(
+        future: _firestore.collection('products').doc(items[0]['productId']).get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Show without category while loading
+            return _orderCardContent(
+              title,
+              date,
+              time,
+              mainItem,
+              null,
+              type,
+              data,
+              id,
+            );
+          }
+          String? category;
+          if (snapshot.hasData && snapshot.data!.exists) {
+            final prod = snapshot.data!.data() as Map<String, dynamic>?;
+            category = prod?['category']?.toString();
+          }
+          return _orderCardContent(
+            title,
+            date,
+            time,
+            mainItem,
+            category,
+            type,
+            data,
+            id,
+          );
+        },
+      );
+    }
+
+    // For bookings or orders without productId
+    return _orderCardContent(
+      title,
+      date,
+      time,
+      mainItem,
+      null,
+      type,
+      data,
+      id,
+    );
+  }
+
+  Widget _orderCardContent(
+    String title,
+    String date,
+    String time,
+    String mainItem,
+    String? mainCategory,
+    String type,
+    Map<String, dynamic> data,
+    String id,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -309,7 +369,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  type == 'booking' ? 'One-Time Cleaning Service' : 'Product Purchase',
+                  type == 'booking' ? 'Service Purchase' : 'Product Purchase',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.black87,
@@ -349,6 +409,17 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                         color: Colors.white,
                       ),
                     ),
+                    if (mainCategory != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '($mainCategory)',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -409,18 +480,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
   }
 
   void _showOrderStatusModal(BuildContext context, Map<String, dynamic> data, String id, String type) {
-    print('Booking/Order Data: $data'); // Debug print to inspect the data
-
-    final String title = type == 'booking'
-        ? (data['serviceType'] ?? 'Unknown Service')
-        : 'Order #${id.substring(0, 8)}';
-
     final List<dynamic> items = type == 'booking'
         ? (data['packageNames'] ?? [])
         : (data['items'] ?? []);
-    final String mainItem = type == 'booking'
-        ? (items.isNotEmpty ? items[0].toString() : 'Item')
-        : (items.isNotEmpty ? items[0]['title']?.toString() ?? 'Item' : 'Item');
+    final List<dynamic> packagePrices = type == 'booking'
+        ? (data['packagePrices'] ?? [])
+        : [];
 
     final double totalPrice = type == 'booking'
         ? (data['totalPrice'] is num ? (data['totalPrice'] as num).toDouble() : 0.0)
@@ -434,24 +499,20 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
 
     final String time = type == 'booking' ? (data['time'] ?? 'N/A') : 'N/A';
 
-    String locationName = 'N/A';
+    String locationName = '';
     String locationAddress = '';
 
     if (type == 'booking') {
       if (data['location'] != null) {
-        locationName = 'Location';
         locationAddress = data['location'].toString(); // Treat location as a string
       } else if (data['locationName'] != null) {
         locationName = data['locationName'].toString();
         locationAddress = data['locationAddress']?.toString() ?? 'N/A';
       } else if (data['address'] != null) {
-        locationName = 'Location';
         locationAddress = data['address'].toString();
       } else if (data['userAddress'] != null) {
-        locationName = 'Location';
         locationAddress = data['userAddress'].toString();
       } else if (data['bookingLocation'] != null) {
-        locationName = 'Location';
         locationAddress = data['bookingLocation'].toString();
       }
     } else {
@@ -459,7 +520,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
       locationAddress = '${data['address'] ?? ''}, ${data['city'] ?? ''}';
     }
 
-    _firestore.collection('users').doc(data['userId']).get().then((userData) {
+    _firestore.collection('users').doc(data['userId']).get().then((userData) async {
       if (!userData.exists) {
         ScaffoldMessenger.of(context).showSnackBar(
           buildCustomSnackBar('User data not found'),
@@ -467,10 +528,30 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
         return;
       }
 
-      final Map<String, dynamic> user = userData.data() as Map<String, dynamic>? ?? {};
+      final Map<String, dynamic> user = userData.data() ?? {};
       final String firstName = user['firstName']?.toString() ?? '';
       final String lastName = user['lastName']?.toString() ?? '';
       final String userName = '$firstName $lastName'.trim();
+
+      // --- Fetch product categories for order items ---
+      List<String?> itemCategories = [];
+      if (type == 'order' && items.isNotEmpty) {
+        // Fetch all product docs in parallel
+        itemCategories = await Future.wait(items.map((item) async {
+          final productId = item['productId'];
+          if (productId != null) {
+            try {
+              final doc = await _firestore.collection('products').doc(productId).get();
+              if (doc.exists) {
+                final prod = doc.data();
+                return prod?['category']?.toString();
+              }
+            } catch (_) {}
+          }
+          return null;
+        }));
+      }
+      // --- End fetch ---
 
       showModalBottomSheet(
         context: context,
@@ -501,14 +582,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    type == 'booking' ? '$mainItem Installation' : mainItem,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -580,7 +653,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                         child: _buildDetailCard(
                           Icons.attach_money,
                           'Price',
-                          '${NumberFormat('#,###').format(totalPrice)} RS Total',
+                          '${NumberFormat('#,###').format(totalPrice)} Rs Total',
                         ),
                       ),
                     ],
@@ -595,7 +668,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ...items.map((item) => Padding(
+                    ...List.generate(items.length, (i) => Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -604,15 +677,30 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  item['title'] ?? 'Item',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      items[i]['title'] ?? 'Item',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (itemCategories.length > i && itemCategories[i] != null) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '(${itemCategories[i]})',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 Text(
-                                  'Quantity: ${item['quantity']}',
+                                  'Quantity: ${items[i]['quantity']}',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey.shade600,
@@ -622,7 +710,43 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                             ),
                           ),
                           Text(
-                            '${(item['price'] * item['quantity']).toStringAsFixed(0)} RS',
+                            '${(items[i]['price'] * items[i]['quantity']).toStringAsFixed(0)} Rs',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF00A99D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                  ],
+                  if (type == 'booking' && items.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Services',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...List.generate(items.length, (i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              items[i]?.toString() ?? 'Package',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${(packagePrices.length > i && packagePrices[i] != null ? int.tryParse(packagePrices[i].toString().split('.').first) ?? packagePrices[i] : 0)} Rs',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -675,7 +799,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
             ],
           ),
           const SizedBox(height: 8),
-          Text(
+          if (value != '') ... [
+            Text(
             value,
             style: const TextStyle(
               color: Colors.white,
@@ -683,6 +808,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
               fontWeight: FontWeight.bold,
             ),
           ),
+          ],
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(

@@ -91,7 +91,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          Navigator.pushNamed(context, '/booking');
+          Navigator.pushNamed(context, '/service');
         },
         child: Container(
           width: size,

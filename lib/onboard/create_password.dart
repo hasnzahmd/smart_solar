@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_solar/profile_screen.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
   @override
@@ -57,7 +56,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       try {
         await FirebaseAuth.instance.currentUser
             ?.updatePassword(_passwordController.text.trim());
-        Navigator.pushReplacementNamed(context, '/name-screen');
+        Navigator.pushReplacementNamed(context, '/get-user-details');
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error setting password')),

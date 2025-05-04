@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_solar/snackbar_utils.dart';
+import 'package:smart_solar/widgets/snackbar_utils.dart';
  // Import the utils
 
-class BookingScreen extends StatefulWidget {
+class ServiceScreen extends StatefulWidget {
   final String serviceType;
 
-  const BookingScreen({
+  const ServiceScreen({
     Key? key,
     required this.serviceType,
   }) : super(key: key);
 
   @override
-  State<BookingScreen> createState() => _BookingScreenState();
+  State<ServiceScreen> createState() => _ServiceScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
+class _ServiceScreenState extends State<ServiceScreen> {
   String _selectedCategory = 'Small Residential';
   List<Map<String, dynamic>> _selectedPackages = [];
   bool _includeFurniture = false;
@@ -108,6 +108,17 @@ class _BookingScreenState extends State<BookingScreen> {
     },
   ];
 
+  double getPriceForCategory(double basePrice) {
+    if (_selectedCategory == 'Commercial') {
+      return basePrice + 3000;
+    } else if (_selectedCategory == 'Industrial') {
+      return basePrice + 6000;
+    }
+    else {
+      return basePrice;
+    }
+  }
+
   @override
   void dispose() {
     _companyController.dispose();
@@ -116,6 +127,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   void _showPackageDetails(BuildContext context, Map<String, dynamic> package) {
+    final double displayPrice = getPriceForCategory((package['price'] ?? 0.0) as double);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -133,7 +145,7 @@ class _BookingScreenState extends State<BookingScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Price: Rs. ${NumberFormat('#,###').format(package['price'])}',
+                  'Price: Rs. ${NumberFormat('#,###').format(displayPrice)}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -273,6 +285,11 @@ class _BookingScreenState extends State<BookingScreen> {
                     onTap: () {
                       setState(() {
                         _selectedCategory = category['name'];
+                        // Recalculate total fee when category changes
+                        _calculatedFee = _selectedPackages.fold(
+                          0.0,
+                          (sum, pkg) => sum + getPriceForCategory((pkg['price'] ?? 0.0) as double),
+                        );
                       });
                     },
                     child: Column(
@@ -330,6 +347,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   itemBuilder: (context, index) {
                     final package = _packages[index];
                     final bool isSelected = _selectedPackages.contains(package);
+                    final double displayPrice = getPriceForCategory((package['price'] ?? 0.0) as double);
 
                     LinearGradient getGradientForPackage() {
                       switch(package['name']) {
@@ -431,7 +449,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           }
                           _calculatedFee = _selectedPackages.fold(
                             0.0,
-                                (sum, pkg) => sum + pkg['price'],
+                            (sum, pkg) => sum + getPriceForCategory((pkg['price'] ?? 0.0) as double),
                           );
                         });
                       },
@@ -501,7 +519,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        'Rs. ${NumberFormat('#,###').format(package['price'])}',
+                                        'Rs. ${NumberFormat('#,###').format(displayPrice)}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,
@@ -894,7 +912,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         'userId': _currentUser.uid,
                         'userEmail': _currentUser.email,
                         'packageNames': _selectedPackages.map((pkg) => pkg['name']).toList(),
-                        'packagePrices': _selectedPackages.map((pkg) => pkg['price']).toList(),
+                        'packagePrices': _selectedPackages.map((pkg) => getPriceForCategory((pkg['price'] ?? 0.0) as double)).toList(),
                         'totalPrice': _calculatedFee,
                         'watt': _selectedWatt,
                         'companyAndModel': _companyController.text,
